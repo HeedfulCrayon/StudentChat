@@ -18,7 +18,6 @@ public final class Dialogue {
             "I think everybody will in the near future, they're terribly comfortable."
     };
 
-    // Basic getter
     // Returns the messages string array
     public String[] getMessages() {
         return messages;

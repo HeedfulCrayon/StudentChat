@@ -2,82 +2,70 @@ package studentChat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-/*
-    Created by Nate on 1/25/2017.
-    Class that represents a student in object form
-*/
+/**
+ * Created by Nate on 1/25/2017.
+ * Class that represents a student in object form
+ */
 public final class Student implements Comparable<Student> {
     private final String firstName;
     private final String lastName;
     private Double score;
     private final List<Response> responses;
 
-    // Constructor
     // Takes a first and last name and assigns them firstName and lastName
     // Creates an empty responses arrayList
+
+    /**
+     * Creates student with an empty responses arrayList
+     * @param FirstName student's first name
+     * @param LastName student's last name
+     */
     public Student(String FirstName, String LastName) {
         this.firstName = FirstName;
         this.lastName = LastName;
         responses = new ArrayList<>();
     }
 
-    // Basic getter
     // Returns the student's first name
     public String getFirstName() {
         return firstName;
     }
 
-    // Basic getter
     // Returns the student's last name
     public String getLastName() {
         return lastName;
     }
 
-    // Basic getter
     // Returns the student's responses arrayList
     public List<Response> getResponses() {
         return responses;
     }
 
-    // Basic setter
-    // Sets the student's score
-    public void setScore(Double score) {
-        this.score = score;
-    }
-
-    // Basic getter
-    // Returns the student's score
-    public Double getScore() {
-        return score;
-    }
-
-    // equals override
-    // Determines if students are the same by the contents of their first and last name
     @Override
-    public boolean equals(Object other) {
-        if (other.getClass() != Student.class) {
-            return false;
-        }
-        Student otherStudent = (Student) other;
-        return otherStudent.firstName.equals(this.firstName) && otherStudent.lastName.equals(this.lastName);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Student student = (Student) o;
+
+        if (firstName != null ? !firstName.equals(student.firstName) : student.firstName != null) return false;
+        return lastName != null ? lastName.equals(student.lastName) : student.lastName == null;
+
     }
 
-    // hashCode override
-    // Generic hashCode function
     @Override
     public int hashCode() {
-        return 0;
+        return Objects.hash(lastName, firstName);
     }
 
-    // toString override
     // Formats the student's name into first name then last name
     @Override
     public String toString() {
         return String.format("%s %s: ", firstName, lastName);
     }
 
-    // compareTo override
     // Compares students by last then first name for sorting purposes
     @Override
     public int compareTo(Student personIn) {
