@@ -27,30 +27,30 @@ public class GroupSelectorGUI extends JFrame {
         panel.add(label);
         // Creates the same number of buttons as there is groups
         // Adds actionListener to each button to launche MessagesGUI
-        for (int i = 1;i <= groups.size();i++)
-        {
-            JButton button = new JButton("Group " + i);
-            button.addActionListener((e) -> {
-                MessagesGUI messagesGui = new MessagesGUI(
-                        button.getText(),
-                        groups.get(Character.getNumericValue(button.getText().charAt(6)) - 1)
-                );
-                messagesGui.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowOpened(WindowEvent e) {
-                        GroupSelectorGUI.super.setVisible(false);
-                    }
-
-                    @Override
-                    public void windowClosed(WindowEvent e) {
-                        GroupSelectorGUI.super.setVisible(true);
-                    }
-                });
-            });
-            button.setAlignmentX(Component.CENTER_ALIGNMENT);
-            panel.add(Box.createRigidArea(spacing));
-            panel.add(button);
-        }
+//        for (int i = 1;i <= groups.size();i++)
+//        {
+//            JButton button = new JButton("Group " + i);
+//            button.addActionListener((e) -> {
+//                MessagesGUI messagesGui = new MessagesGUI(
+//                        button.getText(),
+//                        groups.get(Character.getNumericValue(button.getText().charAt(6)) - 1)
+//                );
+//                messagesGui.addWindowListener(new WindowAdapter() {
+//                    @Override
+//                    public void windowOpened(WindowEvent e) {
+//                        GroupSelectorGUI.super.setVisible(false);
+//                    }
+//
+//                    @Override
+//                    public void windowClosed(WindowEvent e) {
+//                        GroupSelectorGUI.super.setVisible(true);
+//                    }
+//                });
+//            });
+//            button.setAlignmentX(Component.CENTER_ALIGNMENT);
+//            panel.add(Box.createRigidArea(spacing));
+//            panel.add(button);
+//        }
         add(panel);
 
         setSize(new Dimension(300,300));

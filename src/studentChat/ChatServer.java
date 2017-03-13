@@ -1,5 +1,11 @@
 package studentChat;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.*;
 
 /**
@@ -18,14 +24,16 @@ public final class ChatServer {
     }
 
     // Initializes chatServer and starts the chat method
-    public static void main(String[] args) {
-        ChatServer chatServer = new ChatServer();
-        chatServer.chat();
+    public static void main(String[] args){
+        ClientConnector client = new ClientConnector();
+        //ChatServer chatServer = new ChatServer();
+        //chatServer.chat();
     }
 
     // Iterates through the groups assigning responses to students
     private void chat() {
         Dialogue dialogue = new Dialogue();
+        int counter = 1;
         for (Group group : groups) {
             Student student1 = group.getStudent1();
             Student student2 = group.getStudent2();
@@ -35,7 +43,7 @@ public final class ChatServer {
                 addResponse(student2, messages[i]);
             }
         }
-        new GroupSelectorGUI(groups);
+        GroupSelectorGUI groupSelectorGUI = new GroupSelectorGUI(groups);
     }
 
     // Adds response to student and then prints out the student and message

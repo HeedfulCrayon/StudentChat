@@ -5,35 +5,47 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
 
 /**
  * Created by Nate on 1/30/2017.
  * Displays chat messages between students in the group
  */
-public class MessagesGUI extends JDialog {
+public class MessagesGUI extends JDialog {//implements Runnable {
     private static final long serialVersionUID = 1545492493375167694L;
 
+    private InetAddress ip;
+    private Socket socket;
+    private int port = 8080;
+    private String user = "Nate";
+    protected BufferedReader input;
+    protected PrintWriter output;
+    protected Boolean connected;
+    protected Boolean handshake;
     private JTextArea messages;
     private JTextArea sendTxt;
 
     /**
      * Displays chat window of selected group
      * Populates the chat box with previous messages
-     * @param sGroup Group name
-     * @param group Group object
      */
-    public MessagesGUI(String sGroup, Group group){
+    public MessagesGUI(Socket s,BufferedReader in,PrintWriter out){
         String groupMessages = "";
-        for (int i =0; i < group.getStudent1().getResponses().size();i++) {
-            groupMessages += String.format("%s\n",group.getStudent1().getResponses().get(i));
-            groupMessages += String.format("%s\n",group.getStudent2().getResponses().get(i));
-        }
+        socket = s;
+        input = in;
+        output = out;
+    }
 
+    public void Start(){
+        System.out.println("GUI:Starting reader thread");
+        new Thread(new Reader(input)).start();
         JPanel panel = new JPanel();
         messages = new JTextArea(10, 40);
         messages.setLineWrap(true);
         messages.setWrapStyleWord(true);
-        messages.setText(groupMessages);
+        messages.setText("");
         messages.setEditable(false);
         JScrollPane messageScrollPane = new JScrollPane(messages);
         panel.add(messageScrollPane);
@@ -71,14 +83,18 @@ public class MessagesGUI extends JDialog {
         panel.add(send);
 
         JButton cancel = new JButton("Cancel");
-        cancel.addActionListener((e -> this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING))));
+        cancel.addActionListener((e) -> {
+            output.write("quit\r\n");
+            output.flush();
+            this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        });
         panel.add(cancel);
 
         setSize(new Dimension(500,300));
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
-        setTitle(sGroup + " Chat");
+        setTitle(socket.getInetAddress().getHostName() + " Chat");
     }
 
     /**
@@ -86,7 +102,87 @@ public class MessagesGUI extends JDialog {
      * Erases the send box
      */
     private void sendMessage() {
-        messages.setText(messages.getText() + "\n" + sendTxt.getText());
+        String toSend = sendTxt.getText();
+        output.write(toSend + "\r\n");
+        output.flush();
+        System.out.println("GUI:Message Sent - " + toSend);
         sendTxt.setText("");
     }
+
+    private class Reader implements Runnable {
+        private BufferedReader input;
+        private Boolean running;
+
+        public Reader(BufferedReader is) {
+            input = is;
+            running = true;
+        }
+
+        @Override
+        public void run() {
+            System.out.println("GUI:Reader thread started");
+            String reply = "";
+            try {
+                while (running) {
+                    if((reply = input.readLine()) != null) {
+                        System.out.println("GUI: Reply received: " + reply);
+                        if (reply.equals("quit")) {
+                            running = false;
+                        }else {
+                            messages.append(reply + "\r\n");
+                        }
+                    }
+                }
+            } catch(IOException ioe){
+                ioe.printStackTrace();
+            }
+        }
+    }
+
+//    public Boolean getConnectionStatus(){
+//        return connected;
+//    }
+//
+//    public Boolean Connect(InetAddress ip) throws IOException {
+//        socket = new Socket(ip, port);
+//        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//        out = new PrintWriter(socket.getOutputStream(),true);
+//
+//        new Thread(new Reader(in)).start();
+//        out.println(user);
+//        out.flush();
+//        return connected;
+//    }
+//
+//    private class Reader implements Runnable {
+//        private BufferedReader input;
+//
+//        public Reader(BufferedReader is) {
+//            input = is;
+//        }
+//
+//        @Override
+//        public void run() {
+//            String reply;
+//            Boolean replyRec = false;
+//            connected = false;
+//            try {
+//                while((!replyRec) && (!connected)){
+//                    System.out.println("Test before");
+//                    reply = input.readLine();
+//                    if (reply.equals("ACK")) {
+//                        System.out.println("Ack received");
+//                        replyRec = true;
+//                        connected = true;
+//                    } else {
+//                        replyRec = true;
+//                        connected = false;
+//                    }
+//                    System.out.println("Test after");
+//                }
+//            } catch (IOException e){
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 }
