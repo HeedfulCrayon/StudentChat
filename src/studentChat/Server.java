@@ -10,37 +10,15 @@ import java.util.HashSet;
  */
 public class Server implements Runnable {
 
-    static int _port = 8080;
+    private static int port = 8090;
     private ServerSocket serverSocket;
     private Socket acceptedSocket;
-    public static HashSet<String> userNames;
+    protected static HashSet<String> userNames;
 
     public Server() throws IOException {
-        serverSocket = new ServerSocket(_port);
+        serverSocket = new ServerSocket(port);
         userNames = new HashSet<>();
     }
-
-
-//    public void startServer() {
-//        Runnable serverTask = new Runnable() {
-//            @Override
-//            public void run() {
-//                int port = 8080;
-//                ServerSocket serverSocket;
-//                try {
-//                    serverSocket = new ServerSocket(port);
-//                    while (!serverSocket.isClosed() && !serverSocket.isBound()) {
-//                        Socket socket = serverSocket.accept();
-//                        ServerHandler sHandler = new ServerHandler(socket);
-//
-//                        new Thread(sHandler).start();
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        };
-//    }
 
     @Override
     public void run() {

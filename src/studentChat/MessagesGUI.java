@@ -11,35 +11,26 @@ import java.net.Socket;
 
 /**
  * Created by Nate on 1/30/2017.
- * Displays chat messages between students in the group
  */
-public class MessagesGUI extends JDialog {//implements Runnable {
+public class MessagesGUI extends JDialog {
     private static final long serialVersionUID = 1545492493375167694L;
 
     private InetAddress ip;
     private Socket socket;
     private int port = 8080;
-    private String user = "Nate";
-    protected BufferedReader input;
-    protected PrintWriter output;
-    protected Boolean connected;
-    protected Boolean handshake;
+    private BufferedReader input;
+    private PrintWriter output;
     private JTextArea messages;
     private JTextArea sendTxt;
 
-    /**
-     * Displays chat window of selected group
-     * Populates the chat box with previous messages
-     */
     public MessagesGUI(Socket s,BufferedReader in,PrintWriter out){
-        String groupMessages = "";
         socket = s;
         input = in;
         output = out;
     }
 
     public void Start(){
-        System.out.println("GUI:Starting reader thread");
+//        System.out.println("GUI:Starting reader thread");
         new Thread(new Reader(input)).start();
         JPanel panel = new JPanel();
         messages = new JTextArea(10, 40);
@@ -84,8 +75,7 @@ public class MessagesGUI extends JDialog {//implements Runnable {
 
         JButton cancel = new JButton("Cancel");
         cancel.addActionListener((e) -> {
-            output.write("quit\r\n");
-            output.flush();
+
             this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         });
         panel.add(cancel);
@@ -97,16 +87,24 @@ public class MessagesGUI extends JDialog {//implements Runnable {
         setTitle(socket.getInetAddress().getHostName() + " Chat");
     }
 
-    /**
-     * Updates the message box to contain typed text
-     * Erases the send box
-     */
     private void sendMessage() {
         String toSend = sendTxt.getText();
         output.write(toSend + "\r\n");
         output.flush();
         System.out.println("GUI:Message Sent - " + toSend);
         sendTxt.setText("");
+    }
+
+    private void close() {
+        output.write("quit\r\n");
+        output.flush();
+        try {
+            input.close();
+            output.close();
+            socket.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     private class Reader implements Runnable {
@@ -138,51 +136,4 @@ public class MessagesGUI extends JDialog {//implements Runnable {
             }
         }
     }
-
-//    public Boolean getConnectionStatus(){
-//        return connected;
-//    }
-//
-//    public Boolean Connect(InetAddress ip) throws IOException {
-//        socket = new Socket(ip, port);
-//        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//        out = new PrintWriter(socket.getOutputStream(),true);
-//
-//        new Thread(new Reader(in)).start();
-//        out.println(user);
-//        out.flush();
-//        return connected;
-//    }
-//
-//    private class Reader implements Runnable {
-//        private BufferedReader input;
-//
-//        public Reader(BufferedReader is) {
-//            input = is;
-//        }
-//
-//        @Override
-//        public void run() {
-//            String reply;
-//            Boolean replyRec = false;
-//            connected = false;
-//            try {
-//                while((!replyRec) && (!connected)){
-//                    System.out.println("Test before");
-//                    reply = input.readLine();
-//                    if (reply.equals("ACK")) {
-//                        System.out.println("Ack received");
-//                        replyRec = true;
-//                        connected = true;
-//                    } else {
-//                        replyRec = true;
-//                        connected = false;
-//                    }
-//                    System.out.println("Test after");
-//                }
-//            } catch (IOException e){
-//                e.printStackTrace();
-//            }
-//        }
-//    }
 }

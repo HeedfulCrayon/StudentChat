@@ -8,7 +8,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Nate on 3/11/2017.
@@ -16,14 +15,14 @@ import java.util.concurrent.TimeUnit;
 public class ClientConnector extends JFrame{
     private static final long serialVersionUID = -922753426746135029L;
     private JTextField ip_textfield;
+    private JTextField port_textfield;
     private JButton connect_button;
     private InetAddress ip;
     private Socket socket;
-    private int port = 8080;
+    private int port;
     private String user = "Nate\r\n";
-    private InetAddress local;
-    private Thread localServer;
-    protected Boolean connected;
+    private BufferedReader input;
+    private PrintWriter output;
 
     public ClientConnector () {
         try {
@@ -32,11 +31,16 @@ public class ClientConnector extends JFrame{
             e.printStackTrace();
         }
     }
-    public void initialize() throws UnknownHostException, IOException {
-        connected = false;
+
+    private void initialize() throws IOException {
         JPanel panel = new JPanel();
         Dimension spacing = new Dimension(10,10);
         panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+        panel.add(Box.createRigidArea(spacing));
+        panel.add(new JLabel("Enter a server port:"));
+        panel.add(Box.createRigidArea(spacing));
+        port_textfield = new JTextField();
+        panel.add(port_textfield);
         panel.add(Box.createRigidArea(spacing));
         panel.add(new JLabel("Enter a server IP address:"));
         panel.add(Box.createRigidArea(spacing));
@@ -46,6 +50,7 @@ public class ClientConnector extends JFrame{
         connect_button.addActionListener((e) -> {
             try {
                 connect_button.setText("Connecting");
+                port = Integer.valueOf(port_textfield.getText());
                 String ipStr = ip_textfield.getText();
                 ip = InetAddress.getByName(ipStr);
                 Connect(ip);
@@ -63,117 +68,96 @@ public class ClientConnector extends JFrame{
         add(panel);
     }
 
-//    private void StartLocal(){
-//        try {
-//            new Thread(new Server()).start();
-//            if (Reachable("127.0.0.1")) {
-//                local = InetAddress.getByName("127.0.0.1");
-//                if(!Connect(local)){
-//                    System.out.println("Unable to connect");
-//
-//                }
-//            }
-//        } catch (IOException ioe){
-//            ioe.printStackTrace();
-//        }
-//    }
+    private void checkDenial(Boolean ACK){
+        if(ACK == true){
+            StartMessageGUI();
+        }else if(ACK == false) {
+            StartLocal();
+        }
+    }
 
-//    private Boolean Reachable(String ip){
-//        try {
-//
-//            InetAddress address = InetAddress.getByName(ip);
-//
-//            if(address == null)
-//            {
-//                return false;
-//            }
-//
-//        } catch (UnknownHostException e) {
-//            return false;
-//        }
-//        return true;
-//    }
+    private void StartLocal(){
+        try {
+            new Thread(new Server()).start();
+            Connect(InetAddress.getByName("127.0.0.1"));
+        }catch (IOException ioe){
+            ioe.printStackTrace();
+        }
+    }
 
     private void Connect(InetAddress ip) {
         try {
             socket = new Socket(ip, port);
-            BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            new Thread(new Reader(socket,input)).start();
-            PrintWriter output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-            output.write(user);
-            output.flush();
-            MessagesGUI messagesGUI = new MessagesGUI(socket,input,output);
-            messagesGUI.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowOpened(WindowEvent e) {
-                        ClientConnector.super.setVisible(false);
-                    }
-
-                    @Override
-                    public void windowClosed(WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-            messagesGUI.Start();
-//            if (connected) {
-//                MessagesGUI client = new MessagesGUI(socket, in, out);
-//                client.addWindowListener(new WindowAdapter() {
-//                    @Override
-//                    public void windowOpened(WindowEvent e) {
-//                        ClientConnector.super.setVisible(false);
-//                    }
-//
-//                    @Override
-//                    public void windowClosed(WindowEvent e) {
-//                        ClientConnector.super.setVisible(true);
-//                    }
-//                });
-//                new Thread(client).start();
-//            }
-//            return connected;
+            input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            output = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+            new Thread(new Reader(socket,input,output,this)).start();
         } catch (IOException e){
-            try {
-                new Thread(new Server()).start();
-                Connect(InetAddress.getByName("127.0.0.1"));
-            }catch (IOException ioe){
-                ioe.printStackTrace();
-            }
+            System.out.println("CLIENT:Connection failed, starting local server");
+            StartLocal();
         }
+    }
+
+    private void StartMessageGUI(){
+        MessagesGUI messagesGUI = new MessagesGUI(socket, input, output);
+        messagesGUI.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                ClientConnector.super.setVisible(false);
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+                System.exit(0);
+            }
+        });
+        messagesGUI.Start();
     }
 
     private class Reader implements Runnable {
         private BufferedReader input;
+        private PrintWriter output;
         private Socket socket;
         private Boolean running;
+        private ClientConnector clientConnector;
 
-        public Reader(Socket s, BufferedReader in) throws IOException {
+        public Reader(Socket s, BufferedReader in, PrintWriter out, ClientConnector cc) throws IOException {
             socket = s;
             input = in;
+            output = out;
             running = true;
+            clientConnector = cc;
         }
 
         @Override
-        public void run() {
+        public void run(){
             System.out.println("CLIENT:Reader thread started");
             String reply;
             try {
+                int count = 0;
                 System.out.println("CLIENT:Starting loop");
                 while(running){
                     System.out.println("CLIENT:Entered Loop");
+                    if (count == 0){
+                        output.write(user);
+                        output.flush();
+                    }
                     if((reply = input.readLine()) != null) {
                         if (reply.equals("ACK")) {
                             System.out.println("CLIENT:Ack received");
-                            connected = true;
+                            clientConnector.checkDenial(true);
                             running = false;
                         } else if (reply.equals("DENY")) {
-                            throw new IOException();
+                            System.out.println("CLIENT:Deny received");
+                            clientConnector.checkDenial(false);
+                            running = false;
                         }
                     }
+                    count++;
                 }
 
                 System.out.println("CLIENT:Exited Loop");
             } catch (IOException e){
-                e.printStackTrace();
+                System.out.println("Unable to connect");
             }
         }
     }
