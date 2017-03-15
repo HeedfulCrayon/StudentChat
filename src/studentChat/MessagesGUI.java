@@ -124,7 +124,7 @@ public class MessagesGUI extends JDialog {
                 while (running) {
                     if((reply = input.readLine()) != null) {
                         System.out.println("GUI: Reply received: " + reply);
-                        if (reply.equals("quit")) {
+                        if (reply.equals("ACK_END")) {
                             running = false;
                         }else {
                             messages.append(reply + "\r\n");
