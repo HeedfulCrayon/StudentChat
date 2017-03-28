@@ -1,5 +1,7 @@
 import blackjack.message.Message;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -12,8 +14,9 @@ public class ClientConnector {
     private Socket socket;
     private ObjectOutputStream oOutput;
     private ObjectInputStream oInput;
+    private String userName = "Nate";
     public ClientConnector(){
-        String IP = "137.190.250.174";
+        String IP = "52.35.72.251";
         int port = 8989;
         Connect(IP,port);
     }
@@ -29,7 +32,7 @@ public class ClientConnector {
             inetAddr = InetAddress.getByName(ip);
             socket = new Socket(inetAddr,port);
             oOutput = new ObjectOutputStream(socket.getOutputStream());
-            oOutput.writeObject(blackjack.message.MessageFactory.getLoginMessage("Nate"));
+            oOutput.writeObject(blackjack.message.MessageFactory.getLoginMessage(userName));
             oOutput.flush();
             oInput = new ObjectInputStream(socket.getInputStream());
             new Thread(new Reader(socket,oInput,this)).start();
@@ -39,7 +42,19 @@ public class ClientConnector {
     }
 
     private void StartMessageGUI(){
-        new ClientGUI(oInput,oOutput);
+        ClientGUI clientGUI = new ClientGUI(oInput,oOutput,userName);
+        clientGUI.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                try{
+                    socket.close();
+                }catch(IOException ioe){
+                    ioe.printStackTrace();
+                }
+                System.exit(0);
+            }
+        });
+        clientGUI.StartWindow();
     }
 
     private class Reader implements Runnable {
